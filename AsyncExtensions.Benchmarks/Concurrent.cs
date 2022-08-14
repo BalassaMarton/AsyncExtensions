@@ -1,11 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
-using Nito.AsyncEx;
-using AsyncTools;
-using Microsoft.CodeAnalysis.Operations;
 using NitoLock = Nito.AsyncEx.AsyncLock;
-using AsyncLock = AsyncTools.AsyncLock;
 
-namespace AsyncTools.Benchmarks;
+namespace AsyncExtensions.Benchmarks;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]

@@ -1,11 +1,7 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Threading.Tasks.Sources;
+﻿using System.Threading.Tasks.Sources;
 using Microsoft.Extensions.ObjectPool;
 
-namespace AsyncTools;
+namespace AsyncExtensions;
 
 public sealed class AsyncLock
 {
@@ -17,7 +13,7 @@ public sealed class AsyncLock
         if (token.Source != null)
         {
             if (_currentOwner != token.Source) throw ThrowHelper.RecursiveLockNotOwned();
-            token.Source.Acquire(token);
+            token.Source.Acquire(in token);
             return new ValueTask<AsyncLockToken>(token);
         }
         

@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AsyncTools\AsyncTools.csproj" />
+      <ProjectReference Include="../AsyncExtensions/AsyncExtensions.csproj" />
     </ItemGroup>
 
 </Project>

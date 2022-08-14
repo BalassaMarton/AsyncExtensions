@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Tasks.Sources;
 
-namespace AsyncTools;
+namespace AsyncExtensions;
 
 internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
 {
@@ -34,8 +34,6 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
 
     public AsyncLockToken GetToken() => new(this, _valueTaskSource.Version);
 
-    public static readonly AsyncLockTokenSource Null = new AsyncLockTokenSource();
-
     internal void Acquire(AsyncLock @lock)
     {
         _lock = @lock;
@@ -43,15 +41,15 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
         Interlocked.Increment(ref _refCount);
     }
 
-    internal void Acquire(AsyncLockToken token)
+    internal void Acquire(in AsyncLockToken token)
     {
-        ValidateToken(ref token);
+        ValidateToken(in token);
         Interlocked.Increment(ref _refCount);
     }
 
-    internal void Release(AsyncLockToken token)
+    internal void Release(in AsyncLockToken token)
     {
-        ValidateToken(ref token);
+        ValidateToken(in token);
         if (Interlocked.Decrement(ref _refCount) == 0)
         {
             _lock!.Release(this);
@@ -65,12 +63,12 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
         _refCount = 0;
     }
 
-    private void ValidateToken(ref AsyncLockToken token)
+    private void ValidateToken(in AsyncLockToken token)
     {
         if (token.Source != this || token.Version != _valueTaskSource.Version) throw ThrowHelper.InvalidToken();
     }
 
-    public void SetResult(AsyncLockToken lockToken)
+    public void SetResult(in AsyncLockToken lockToken)
     {
         _valueTaskSource.SetResult(lockToken);
     }

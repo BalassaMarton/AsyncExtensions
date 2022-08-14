@@ -1,4 +1,4 @@
-﻿namespace AsyncTools;
+﻿namespace AsyncExtensions;
 
 public readonly struct AsyncLockToken : IDisposable
 {
@@ -13,6 +13,6 @@ public readonly struct AsyncLockToken : IDisposable
 
     public void Dispose()
     {
-        Source?.Release(this);
+        Source?.Release(in this);
     }
 }

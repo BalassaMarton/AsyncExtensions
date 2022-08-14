@@ -1,4 +1,4 @@
-﻿namespace AsyncTools;
+﻿namespace AsyncExtensions;
 
 internal static class ThrowHelper
 {

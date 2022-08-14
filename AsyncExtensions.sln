@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncTools", "AsyncTools\AsyncTools.csproj", "{83412517-7948-46A0-9ED2-E4EFC9B429BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncExtensions", "AsyncExtensions\AsyncExtensions.csproj", "{83412517-7948-46A0-9ED2-E4EFC9B429BB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncTools.Tests", "AsyncTools.Tests\AsyncTools.Tests.csproj", "{490BA806-12F3-4F76-90FF-9D0C0B317B1D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncExtensions.Tests", "AsyncExtensions.Tests\AsyncExtensions.Tests.csproj", "{490BA806-12F3-4F76-90FF-9D0C0B317B1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncTools.Benchmarks", "AsyncTools.Benchmarks\AsyncTools.Benchmarks.csproj", "{776D49FC-CA54-47F2-BC64-9594A3D34A85}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncExtensions.Benchmarks", "AsyncExtensions.Benchmarks\AsyncExtensions.Benchmarks.csproj", "{776D49FC-CA54-47F2-BC64-9594A3D34A85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

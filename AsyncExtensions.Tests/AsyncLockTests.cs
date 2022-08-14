@@ -1,6 +1,4 @@
-using System.Diagnostics;
-
-namespace AsyncTools.Tests;
+namespace AsyncExtensions.Tests;
 
 public partial class AsyncLockTests
 {
