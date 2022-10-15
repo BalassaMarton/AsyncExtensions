@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-      <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.1"/>
+        <PackageReference Include="Nito.AsyncEx" Version="5.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="../AsyncExtensions/AsyncExtensions.csproj" />
+        <ProjectReference Include="../AsyncExtensions/AsyncExtensions.csproj"/>
     </ItemGroup>
 
 </Project>

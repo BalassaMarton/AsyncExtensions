@@ -11,7 +11,7 @@ internal static class ThrowHelper
     {
         return new InvalidOperationException("Attempted to recursively acquire a lock without owning it");
     }
-    
+
     public static InvalidOperationException ReleasedLockNotOwned()
     {
         return new InvalidOperationException("Attempted to release a lock without owning it");

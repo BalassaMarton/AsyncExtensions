@@ -15,4 +15,6 @@ public readonly struct AsyncLockToken : IDisposable
     {
         Source?.Release(in this);
     }
+
+    public bool IsEmpty => Source == null;
 }

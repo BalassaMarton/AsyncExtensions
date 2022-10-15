@@ -7,43 +7,35 @@ namespace AsyncExtensions.Benchmarks;
 [ThreadingDiagnoser]
 public class Sequential
 {
-    private const int NumberOfOperations = 10000; 
-    
-    private NitoLock _nitoLock;
-    
+    public const int NumberOfOperations = 10000;
+
     [GlobalSetup(Target = nameof(Nito_LockAsync))]
     public void Nito_LockAsync_Setup()
     {
         _nitoLock = new NitoLock();
     }
-    
+
     [Benchmark(Baseline = true)]
     public async Task Nito_LockAsync()
     {
-        for (int i = 0; i < NumberOfOperations; i++)
-        {
-            using (await _nitoLock.LockAsync())
-            {
-            }
-        }
+        for (var i = 0; i < NumberOfOperations; i++)
+            using (await _nitoLock.LockAsync()) { }
     }
-    
-    private AsyncLock _lock;
-    
-    [GlobalSetup(Target = nameof(AsyncTools_LockAsync))]
-    public void AsyncTools_LockAsync_Setup()
+
+    [GlobalSetup(Target = nameof(AsyncExtensions_LockAsync))]
+    public void AsyncExtensions_LockAsync_Setup()
     {
         _lock = new AsyncLock();
     }
-    
+
     [Benchmark]
-    public async Task AsyncTools_LockAsync()
+    public async Task AsyncExtensions_LockAsync()
     {
-        for (int i = 0; i < NumberOfOperations; i++)
-        {
-            using (await _lock.LockAsync())
-            {
-            }
-        }
+        for (var i = 0; i < NumberOfOperations; i++)
+            using (await _lock.LockAsync()) { }
     }
+
+    private AsyncLock _lock;
+
+    private NitoLock _nitoLock;
 }

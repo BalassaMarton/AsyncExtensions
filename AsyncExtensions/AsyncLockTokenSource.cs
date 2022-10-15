@@ -5,14 +5,10 @@ namespace AsyncExtensions;
 
 internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
 {
-    private AsyncLock? _lock;
-    private uint _refCount;
-
-    private ManualResetValueTaskSourceCore<AsyncLockToken> _valueTaskSource = new()
-        { RunContinuationsAsynchronously = true };
-
     public short Version => _valueTaskSource.Version;
-    
+
+    public AsyncLockToken ParentToken;
+
     public AsyncLockToken GetResult(short token)
     {
         return _valueTaskSource.GetResult(token);
@@ -32,40 +28,9 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
         _valueTaskSource.OnCompleted(continuation, state, token, flags);
     }
 
-    public AsyncLockToken GetToken() => new(this, _valueTaskSource.Version);
-
-    internal void Acquire(AsyncLock @lock)
+    public AsyncLockToken GetToken()
     {
-        _lock = @lock;
-        Debug.Assert(_refCount == 0);
-        Interlocked.Increment(ref _refCount);
-    }
-
-    internal void Acquire(in AsyncLockToken token)
-    {
-        ValidateToken(in token);
-        Interlocked.Increment(ref _refCount);
-    }
-
-    internal void Release(in AsyncLockToken token)
-    {
-        ValidateToken(in token);
-        if (Interlocked.Decrement(ref _refCount) == 0)
-        {
-            _lock!.Release(this);
-        }
-    }
-
-    internal void Reset()
-    {
-        _valueTaskSource.Reset();
-        _lock = null;
-        _refCount = 0;
-    }
-
-    private void ValidateToken(in AsyncLockToken token)
-    {
-        if (token.Source != this || token.Version != _valueTaskSource.Version) throw ThrowHelper.InvalidToken();
+        return new AsyncLockToken(this, _valueTaskSource.Version);
     }
 
     public void SetResult(in AsyncLockToken lockToken)
@@ -76,5 +41,50 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
     public void SetException(Exception e)
     {
         _valueTaskSource.SetException(e);
+    }
+
+    public void Acquire(AsyncLock @lock)
+    {
+        _lock = @lock;
+        Debug.Assert(_refCount == 0);
+        Interlocked.Increment(ref _refCount);
+    }
+
+    public void Acquire(in AsyncLockToken token)
+    {
+        ValidateToken(in token);
+        Interlocked.Increment(ref _refCount);
+    }
+
+    public void Release(in AsyncLockToken token)
+    {
+        ValidateToken(in token);
+
+        if (Interlocked.Decrement(ref _refCount) == 0)
+        {
+            _lock!.Release(this);
+        }
+    }
+
+    public void Reset()
+    {
+        _valueTaskSource.Reset();
+        _lock = null;
+        _refCount = 0;
+        ParentToken = default;
+    }
+
+    private AsyncLock? _lock;
+    private uint _refCount;
+
+    private ManualResetValueTaskSourceCore<AsyncLockToken> _valueTaskSource = new()
+    {
+        RunContinuationsAsynchronously = true
+    };
+
+    private void ValidateToken(in AsyncLockToken token)
+    {
+        if (token.Source != this || token.Version != _valueTaskSource.Version)
+            throw ThrowHelper.InvalidToken();
     }
 }
