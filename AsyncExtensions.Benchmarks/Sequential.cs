@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
-using NitoLock = Nito.AsyncEx.AsyncLock;
+using DotNext.Threading;
 
 namespace AsyncExtensions.Benchmarks;
 
@@ -7,35 +7,44 @@ namespace AsyncExtensions.Benchmarks;
 [ThreadingDiagnoser]
 public class Sequential
 {
-    public const int NumberOfOperations = 10000;
-
-    [GlobalSetup(Target = nameof(Nito_LockAsync))]
-    public void Nito_LockAsync_Setup()
+    [Benchmark]
+    public async Task Nito_AsyncLock()
     {
-        _nitoLock = new NitoLock();
-    }
-
-    [Benchmark(Baseline = true)]
-    public async Task Nito_LockAsync()
-    {
-        for (var i = 0; i < NumberOfOperations; i++)
-            using (await _nitoLock.LockAsync()) { }
-    }
-
-    [GlobalSetup(Target = nameof(AsyncExtensions_LockAsync))]
-    public void AsyncExtensions_LockAsync_Setup()
-    {
-        _lock = new AsyncLock();
+        using (await _nitoAsyncLock.LockAsync())
+        {
+            await Task.Yield();
+        }
     }
 
     [Benchmark]
-    public async Task AsyncExtensions_LockAsync()
+    public async Task Reactive_AsyncGate()
     {
-        for (var i = 0; i < NumberOfOperations; i++)
-            using (await _lock.LockAsync()) { }
+        using (await _reactiveAsyncGate.LockAsync())
+        {
+            await Task.Yield();
+        }
     }
 
-    private AsyncLock _lock;
+    [Benchmark]
+    public async Task DotNext_AsyncExclusiveLock()
+    {
+        using (await _dotNextAsyncExclusiveLock.AcquireLockAsync(CancellationToken.None))
+        {
+            await Task.Yield();
+        }
+    }
 
-    private NitoLock _nitoLock;
+    [Benchmark(Baseline = true)]
+    public async Task AsyncExtensions_LockAsync()
+    {
+        using (await _asyncLock.LockAsync())
+        {
+            await Task.Yield();
+        }
+    }
+
+    private AsyncLock _asyncLock = new();
+    private NitoAsyncLock _nitoAsyncLock = new();
+    private ReactiveAsyncGate _reactiveAsyncGate = new();
+    private DotNextAsyncExclusiveLock _dotNextAsyncExclusiveLock = new();
 }

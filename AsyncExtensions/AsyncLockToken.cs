@@ -1,4 +1,6 @@
-﻿namespace AsyncExtensions;
+﻿using System.Diagnostics;
+
+namespace AsyncExtensions;
 
 public readonly struct AsyncLockToken : IDisposable
 {
@@ -17,4 +19,19 @@ public readonly struct AsyncLockToken : IDisposable
     }
 
     public bool IsEmpty => Source == null;
+}
+
+public static class AsyncLockTokenExtensions
+{
+    public static AsyncLockToken WithReentrancy(this AsyncLockToken token)
+    {
+        Debug.Assert(token.Source != null);
+        var owner = token.Source.GetOwner();
+        if (owner.Options.AllowReentrancy)
+        {
+            owner.EnableReentrancy();
+        }
+
+        return token;
+    }
 }

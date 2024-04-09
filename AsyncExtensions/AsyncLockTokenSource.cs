@@ -25,7 +25,26 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
         short token,
         ValueTaskSourceOnCompletedFlags flags)
     {
-        _valueTaskSource.OnCompleted(continuation, state, token, flags);
+        Debug.Assert(_owner != null);
+
+        if (!_owner.Options.AllowReentrancy)
+        {
+            _valueTaskSource.OnCompleted(
+                continuation,
+                state,
+                token,
+                flags);
+
+            return;
+        }
+
+        _owner.EnableReentrancy();
+
+        _valueTaskSource.OnCompleted(
+            continuation,
+            state,
+            token,
+            flags | ValueTaskSourceOnCompletedFlags.FlowExecutionContext);
     }
 
     public AsyncLockToken GetToken()
@@ -43,9 +62,20 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
         _valueTaskSource.SetException(e);
     }
 
-    public void Acquire(AsyncLock @lock)
+    public AsyncLock GetOwner()
     {
-        _lock = @lock;
+        Debug.Assert(_owner != null);
+        return _owner;
+    }
+
+    public void SetOwner(AsyncLock owner)
+    {
+        Debug.Assert(_owner == null);
+        _owner = owner;
+    }
+
+    public void Acquire()
+    {
         Debug.Assert(_refCount == 0);
         Interlocked.Increment(ref _refCount);
     }
@@ -62,24 +92,24 @@ internal sealed class AsyncLockTokenSource : IValueTaskSource<AsyncLockToken>
 
         if (Interlocked.Decrement(ref _refCount) == 0)
         {
-            _lock!.Release(this);
+            _owner!.Release(this);
         }
     }
 
     public void Reset()
     {
         _valueTaskSource.Reset();
-        _lock = null;
+        _owner = null;
         _refCount = 0;
         ParentToken = default;
     }
 
-    private AsyncLock? _lock;
+    private AsyncLock? _owner;
     private uint _refCount;
 
     private ManualResetValueTaskSourceCore<AsyncLockToken> _valueTaskSource = new()
     {
-        RunContinuationsAsynchronously = true
+        RunContinuationsAsynchronously = true,
     };
 
     private void ValidateToken(in AsyncLockToken token)

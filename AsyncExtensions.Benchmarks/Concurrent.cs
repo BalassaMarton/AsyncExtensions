@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
-using NitoLock = Nito.AsyncEx.AsyncLock;
+using DotNext.Threading;
 
 namespace AsyncExtensions.Benchmarks;
 
@@ -7,85 +7,64 @@ namespace AsyncExtensions.Benchmarks;
 [ThreadingDiagnoser]
 public class Concurrent
 {
-    public Concurrent()
+    [Benchmark]
+    public async Task Nito_AsyncLock()
     {
-        GenerateRandomDelays();
-    }
-
-    [Params(4, 8, 16)]
-    public int Concurrency { get; set; }
-
-    [GlobalSetup(Target = nameof(Nito_LockAsync))]
-    public void Nito_LockAsync_Setup()
-    {
-        _nitoLock = new NitoLock();
-    }
-
-    [Benchmark(Baseline = true)]
-    public async Task Nito_LockAsync()
-    {
-        var tasks = new List<Task>();
-
-        foreach (var i in _randomDelays)
-            tasks.Add(Task.Run(() => CreateTask(i)));
-
-        await Task.WhenAll(tasks);
-
-        async Task CreateTask(int delay)
-        {
-            await Task.Delay(delay);
-
-            for (var i = 0; i < NumberOfOperations; i++)
-            {
-                using (await _nitoLock.LockAsync())
-                {
-                    await Task.Delay(delay);
-                }
-            }
-        }
-    }
-
-    [GlobalSetup(Target = nameof(AsyncExtensions_LockAsync))]
-    public void AsyncExtensions_LockAsync_Setup()
-    {
-        _lock = new AsyncLock();
+        await RunBenchmark(
+            () => new ValueTask<IDisposable>(_nitoAsyncLock.LockAsync().AsTask()));
     }
 
     [Benchmark]
+    public async Task Reactive_AsyncGate()
+    {
+        await RunBenchmark(
+            () => _reactiveAsyncGate.LockAsync());
+    }
+
+    [Benchmark]
+    public async Task DotNext_AsyncExclusiveLock()
+    {
+        await RunBenchmark(
+            () => _dotNextAsyncExclusiveLock.AcquireLockAsync(CancellationToken.None));
+    }
+
+    [Benchmark(Baseline = true)]
     public async Task AsyncExtensions_LockAsync()
     {
-        var tasks = new List<Task>();
+        await RunBenchmark(() => _asyncLock.LockAsync());
+    }
 
-        foreach (var i in _randomDelays)
-            tasks.Add(Task.Run(() => CreateTask(i)));
+    private async Task RunBenchmark<TReleaser>(Func<ValueTask<TReleaser>> lockFunc) where TReleaser : IDisposable
+    {
+        var tasks = Task.WhenAll(
+            GatedTask(_gates[0], _gates[1]),
+            GatedTask(_gates[1], _gates[2]),
+            GatedTask(_gates[2], null));
 
-        await Task.WhenAll(tasks);
+        _gates[0].Release();
 
-        async Task CreateTask(int delay)
+        async Task GatedTask(SemaphoreSlim gate, SemaphoreSlim? next)
         {
-            await Task.Delay(delay);
+            await gate.WaitAsync();
 
-            for (var i = 0; i < NumberOfOperations; i++)
+            using (await lockFunc())
             {
-                using (await _lock.LockAsync())
-                {
-                    await Task.Delay(delay);
-                }
+                next?.Release();
+                await Task.Yield();
             }
         }
     }
 
-    private const int NumberOfOperations = 10;
-
-    private AsyncLock _lock;
-
-    private NitoLock _nitoLock;
-
-    private int[] _randomDelays;
-
-    private void GenerateRandomDelays()
+    [IterationSetup]
+    public void IterationSetup()
     {
-        var random = new Random(0);
-        _randomDelays = Enumerable.Range(0, Concurrency).Select(_ => random.Next(10)).ToArray();
+        _gates = new SemaphoreSlim[] { new(0), new(0), new(0) };
     }
+
+    private SemaphoreSlim[] _gates = Array.Empty<SemaphoreSlim>();
+    
+    private AsyncLock _asyncLock = new();
+    private NitoAsyncLock _nitoAsyncLock = new();
+    private ReactiveAsyncGate _reactiveAsyncGate = new();
+    private DotNextAsyncExclusiveLock _dotNextAsyncExclusiveLock = new();
 }
